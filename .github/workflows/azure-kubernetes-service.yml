@@ -106,25 +106,4 @@ jobs:
         run: |
           IP=$(kubectl get svc web-service -n "$NAMESPACE" \
                  -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-          echo "### App URL: http://${IP:-pending}" >> "$GITHUB_STEP_SUMMARY"        uses: azure/aks-set-context@v4
-        with:
-          resource-group: ${{ env.AKS_RESOURCE_GROUP }}
-          cluster-name: ${{ env.AKS_CLUSTER }}
-
-      - name: Apply manifests
-        run: kubectl apply -f .
-
-      - name: Wait for rollout
-        run: kubectl rollout status deployment/web-app -n "$NAMESPACE" --timeout=180s
-
-      - name: Show cluster state
-        run: |
-          kubectl get deploy,pods,svc,hpa -n "$NAMESPACE" -o wide
-          echo "--- rollout history ---"
-          kubectl rollout history deployment/web-app -n "$NAMESPACE"
-
-      - name: Publish app URL
-        run: |
-          IP=$(kubectl get svc web-service -n "$NAMESPACE" \
-                 -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
           echo "### App URL: http://${IP:-pending}" >> "$GITHUB_STEP_SUMMARY"
