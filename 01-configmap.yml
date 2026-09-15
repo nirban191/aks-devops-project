@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: web-content
+  namespace: aks-devops
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>AKS DevOps Project</title>
+    </head>
+    <body>
+      <h1>AKS DevOps Project</h1>
+      <p>Application deployed successfully on Azure Kubernetes Service.</p>
+    </body>
+    </html>
