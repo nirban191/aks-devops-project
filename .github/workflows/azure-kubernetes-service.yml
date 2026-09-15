@@ -1,0 +1,58 @@
+name: deploy-to-aks
+
+# Manifests live at the repository root (00-namespace.yml ... 04-hpa.yml).
+# kubectl only picks up .yml/.yaml/.json from a directory and ignores
+# subfolders, so "-f ." will not try to apply this workflow file.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AKS_CLUSTER: devopscluster
+  AKS_RESOURCE_GROUP: aks-devops-project
+  NAMESPACE: aks-devops
+
+jobs:
+  deploy:
+    name: Deploy to AKS
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Set AKS context
+        uses: azure/aks-set-context@v4
+        with:
+          resource-group: ${{ env.AKS_RESOURCE_GROUP }}
+          cluster-name: ${{ env.AKS_CLUSTER }}
+
+      - name: Apply manifests
+        run: kubectl apply -f .
+
+      - name: Wait for rollout
+        run: kubectl rollout status deployment/web-app -n "$NAMESPACE" --timeout=180s
+
+      - name: Show cluster state
+        run: |
+          kubectl get deploy,pods,svc,hpa -n "$NAMESPACE" -o wide
+          echo "--- rollout history ---"
+          kubectl rollout history deployment/web-app -n "$NAMESPACE"
+
+      - name: Publish app URL
+        run: |
+          IP=$(kubectl get svc web-service -n "$NAMESPACE" \
+                 -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          echo "### App URL: http://${IP:-pending}" >> "$GITHUB_STEP_SUMMARY"
