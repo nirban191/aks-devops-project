@@ -179,7 +179,6 @@ Container Insights, if enabled, creates its Log Analytics workspace in a separat
 
 | Decision | Reason |
 |---|---|
-| No `replicas` in the Deployment | With an HPA present, a replica count in the manifest resets the scale on every apply and fights the autoscaler |
 | Image tagged with the commit SHA | Every running pod maps to exactly one commit; no two deploys share a tag |
 | OIDC federation, no client secret | Nothing to rotate or leak; trust is scoped to one repo and branch |
 | `AcrPush` and Cluster User at resource scope | Least privilege — the pipeline identity cannot reach anything else in the subscription |
@@ -204,10 +203,3 @@ Container Insights, if enabled, creates its Log Analytics workspace in a separat
 - **The container runs as root**, inherited from the base image, because NGINX binds port 80.
   Production would use `nginxinc/nginx-unprivileged` on 8080 with matching `containerPort`
   and `targetPort`.
-
-## Not included
-
-Single-node cluster, one stateless workload, no TLS, no Ingress, no network policies, no
-staged environments. A production version would add multiple node pools, an Ingress
-controller with certificates, PodDisruptionBudgets, image scanning in the pipeline, and a
-private API server endpoint.
